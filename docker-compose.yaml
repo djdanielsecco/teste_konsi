@@ -1,0 +1,84 @@
+services:
+
+  system:
+   container_name: puppeteer-chrome
+   image: puppeteer-chrome-linux
+   build:
+       context: .
+       target: system
+       dockerfile: ./Dockerfile
+   working_dir: /home/pptruser
+   stdin_open: true 
+   tty: true 
+   cap_add:
+       - ALL
+       - SYS_ADMIN
+   restart: unless-stopped
+  dev:
+   container_name: nestjs_api_dev
+   image: nestjs-api-dev:1.0.0
+   build:
+       context: .
+       target: development
+       dockerfile: ./Dockerfile
+   working_dir: /home/pptruser/app
+   stdin_open: true 
+   tty: true 
+   command: /bin/bash 
+   cap_add:
+       - ALL
+       - SYS_ADMIN
+   ports:
+       - 3000:3000
+       - 8000:8000
+
+   volumes:
+       - .:/home/pptruser/app
+   restart: unless-stopped
+
+  builder:
+   container_name: nestjs_api_build
+   image: nestjs-api-build:latest
+   build:
+       context: .
+       target: builder
+       dockerfile: ./Dockerfile
+   working_dir: /home/pptruser/app  
+   stdin_open: true 
+   tty: true 
+   command:  npm run start:debug
+   cap_add:
+       - ALL
+       - SYS_ADMIN
+   ports:
+       - 3000:3000
+       - 8000:8000
+
+   volumes:
+       - .:/home/pptruser/app
+       - /home/pptruser/app/node_modules
+   restart: unless-stopped
+
+  prod:
+   container_name: nestjs_api_prod
+   image: nestjs-api-prod:latest
+   build:
+       context: .
+       target: production
+       dockerfile: ./Dockerfile
+   working_dir: /home/pptruser/app  
+   stdin_open: true 
+   tty: true   
+   command:  pm2-runtime ./dist/main.js 
+   cap_add:
+       - ALL
+       - SYS_ADMIN
+   ports:
+       - 3000:3000
+       - 8000:8000
+
+   restart: unless-stopped
+    
+volumes:
+    dev-vol:
+        external: true
